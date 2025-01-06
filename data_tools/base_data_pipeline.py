@@ -32,19 +32,19 @@ class BaseDataPipeline:
             Prepares and returns the dataset and dataloader.
     """
     def __init__(
-            self,
-            dataset_name,
-            train=True,
-            batch_size=1,
-            problem_dirs=None,
-            max_len=36000,
-            curriculum_mode="heuristic",
-            debug_mode=False,
-            debug_subset=50,
-            dataset_type='pytorch',
-            eval_later=False,
-            use_public_tests=False,
-            **kwargs
+        self,
+        dataset_name,
+        train=True,
+        batch_size=1,
+        problem_dirs=None,
+        max_len=36000,
+        curriculum_mode="heuristic",
+        debug_mode=False,
+        debug_subset=50,
+        dataset_type='pytorch',
+        eval_later=False,
+        use_public_tests=False,
+        **kwargs
     ):
         self.dataset_name = dataset_name
         self.train = train
@@ -66,7 +66,36 @@ class BaseDataPipeline:
     def postprocess(self, **kwargs):
         pass
 
+    def filter_dataset(self, dataset, dataloader):
+        """
+        Base filtering method that can be overridden by derived classes.
+        By default, returns the dataset unchanged.
+        
+        Args:
+            dataset: The dataset to filter
+            
+        Returns:
+            filtered_dataset: The filtered dataset
+            filter_metadata: Dict containing info about the filtering (e.g., indices kept)
+        """
+        return dataset, dataloader
+
     def get_dataset(self):
+        """
+        Template method that handles the dataset loading and filtering pipeline.
+        Derived classes should implement _load_raw_dataset instead of overriding this.
+        """
+        dataset, dataloader = self._load_raw_dataset()
+        
+        if dataset is not None:
+            dataset, dataloader = self.filter_dataset(dataset, dataloader)
+            # Optionally log or store filter_metadata
+        return dataset, dataloader
+    
+    def _load_raw_dataset(self):
+        """
+        Abstract method to be implemented by derived classes to load the raw dataset.
+        """
         raise NotImplementedError
 
     def get_dataloader(self):
@@ -90,6 +119,10 @@ class BaseDataPipeline:
             batch_size=self.batch_size
         )
         return dataset, dataloader
+    
+    def attach_to_agent(self, actor):
+        _, dataloader = self.get_dataloader()
+        actor.dataloader = dataloader
 
 
 def generic_preprocess_test(full_task, **kwargs):
@@ -169,6 +202,8 @@ def prepare_dataloader(
             l_kwargs['sampler'] = AccedingSequenceLengthSampler(dataset)
         dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda x: x, **l_kwargs)
     elif dataset_type == 'hf':
+        if dataloader is None:
+            dataloader = dataset
         if debug_mode:
             dataloader = dataloader.select(range(debug_subset))
     return dataset, dataloader

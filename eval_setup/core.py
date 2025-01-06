@@ -1,6 +1,6 @@
+import json
 import os
 import shutil
-import time
 import logging
 import glob
 
@@ -19,6 +19,7 @@ from cognitive_base.utils import custom_breakpoint, f_mkdir, load_json, dump_jso
 logger = logging.getLogger("logger")
 
 
+# Initializing stuff
 def initialize_directories(args):
     """
     Initializes directories for training and checkpoint management based on the provided arguments.
@@ -56,41 +57,75 @@ def initialize_directories(args):
             custom_breakpoint()
 
 
-def cleanup(args):
-    """
-    Cleans up by copying checkpoint directory to the result directory if standalone checkpoint is specified.
-
-    Args:
-        args: An object containing the following attributes:
-            standalone_ckpt (bool): Flag indicating if standalone checkpoint is specified.
-            ckpt_dir (str): Path to the checkpoint directory.
-            result_dir (str): Path to the result directory.
-            ckpt_name (str): Name of the checkpoint.
-
-    Prints:
-        A message indicating the result directory.
-    """
-    if args.standalone_ckpt:
-        shutil.copytree(args.ckpt_dir, args.result_dir + '/' + args.ckpt_name, dirs_exist_ok=True)
-    print(f'Done. result dir is {args.result_dir}')
-
-
 def initialize_environment(args, env_registry_updates=None):
     """
     Initializes the environment with the given arguments and optional registry updates.
+    Supports separate train and test environments.
 
     Args:
         args (Namespace): A namespace object containing the arguments for initializing the environment.
-        env_registry_updates (dict, optional): A dictionary containing updates to the environment registry. Defaults to None.
+        env_registry_updates (dict, optional): A dictionary containing updates to the environment registry.
 
     Returns:
         None
     """
     kwargs = vars(args)
-    if env_registry_updates:
-        env_registry.update(env_registry_updates)
-    env_globals.init_code_env(**kwargs)
-    args.generic_code_env = env_globals.task_env.generic_code_env
+    args.generic_code_env = False
+    if args.do_train or args.do_test:
+        if env_registry_updates:
+            env_registry.update(env_registry_updates)
+        env_globals.init_code_env(**kwargs)
+        # Set generic_code_env based on current task_env
+        args.generic_code_env = env_globals.task_env.generic_code_env
+
+
+def save_args(args):
+    dump_json(vars(args), f"{args.result_dir}/args.json", indent=4)
+
+
+def attach_env_to_agent(args, actor):
+    """
+    Attaches the appropriate environment to the agent based on whether we're training or testing.
+    
+    Args:
+        args: Arguments containing do_train and do_test flags
+        actor: The agent to attach the environment to
+    """
+    # TODO: current flow only accepts either train or test script
+    # possible to have both at one go but need to sort out the generic_code_env
+    # that is used in the agent init 
+    # (need to re-init agent stuff if train n test envs are different in that val)
+    if args.do_train:
+        actor.env_interface = env_globals.train_env
+    elif args.do_test:
+        actor.env_interface = env_globals.test_env
+
+
+# train related
+def load_train_data(args, actor, dataset_registry_updates=None):
+    """
+    Evaluates the performance of an agent using the provided arguments and actor.
+    Args:
+        args (Namespace): A namespace object containing various arguments and configurations.
+            - do_test (bool): Flag to indicate whether to perform testing.
+            - test_dataset_name (str, optional): Name of the test dataset to use.
+            - dataset_name (str): Name of the dataset to use (legacy compatibility)
+        actor (object): The agent or model to be evaluated.
+        dataset_registry_updates (dict, optional): Updates to be applied to the dataset registry.
+    Returns:
+        None
+    """
+    if args.do_train and args.load_train:
+        if args.train_dataset_name:
+            args.dataset_name = args.train_dataset_name
+        kwargs = vars(args)
+        
+        if dataset_registry_updates:
+            print("Before dataset_registry update:", json.dumps(dataset_registry, indent=4))
+            dataset_registry.update(dataset_registry_updates)
+            print("After update:", json.dumps(dataset_registry, indent=4))
+        data_pipeline = data_pipeline_factory(train=True, **kwargs)
+        data_pipeline.attach_to_agent(actor)
 
 
 def prepare_train(args, actor):
@@ -121,10 +156,7 @@ def train_agent(args, actor):
         actor.train_loop()
 
 
-def save_args(args):
-    dump_json(vars(args), f"{args.result_dir}/args.json", indent=4)
-    
-
+# test related
 def evaluate_agent(args, actor, dataset_registry_updates=None):
     """
     Evaluates the performance of an agent using the provided arguments and actor.
@@ -149,3 +181,23 @@ def evaluate_agent(args, actor, dataset_registry_updates=None):
 
         eval_manager = EvalManager(args, actor, data_pipeline)
         eval_manager.test_loop()
+
+
+# cleanup
+def cleanup(args):
+    """
+    Cleans up by copying checkpoint directory to the result directory if standalone checkpoint is specified.
+
+    Args:
+        args: An object containing the following attributes:
+            standalone_ckpt (bool): Flag indicating if standalone checkpoint is specified.
+            ckpt_dir (str): Path to the checkpoint directory.
+            result_dir (str): Path to the result directory.
+            ckpt_name (str): Name of the checkpoint.
+
+    Prints:
+        A message indicating the result directory.
+    """
+    if args.standalone_ckpt:
+        shutil.copytree(args.ckpt_dir, args.result_dir + '/' + args.ckpt_name, dirs_exist_ok=True)
+    print(f'Done. result dir is {args.result_dir}')

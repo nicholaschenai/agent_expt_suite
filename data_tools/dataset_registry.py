@@ -7,4 +7,8 @@ dataset_registry = {
         'module': 'agent_expt_suite.data_tools.MBPP_Plus.MBPP_Plus_data_pipeline',
         'class': 'MBPPPlusDataPipeline',
     },
+    "APPS": {
+        'module': 'agent_expt_suite.data_tools.APPS.APPS_data_pipeline',
+        'class': 'APPSDataPipeline',
+    },
 }

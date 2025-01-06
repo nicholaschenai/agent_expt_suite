@@ -21,14 +21,14 @@ class MbppCodeEnv(BaseCodeEnv):
         max_chars (int): The maximum number of characters to display per test in feedback.
     """
     def __init__(
-            self,
-            timeout=10,
-            max_display_tests=None,
-            max_display_chars=None,
-            use_public_tests=False,
-            dataset_name="MBPP",
-            **kwargs
-            ):
+        self,
+        timeout=10,
+        max_display_tests=None,
+        max_display_chars=None,
+        use_public_tests=False,
+        dataset_name="MBPP",
+        **kwargs
+    ):
         """
         Initializes the CodeEnv with the given parameters.
 

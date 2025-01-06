@@ -15,4 +15,8 @@ env_registry = {
         'module': 'agent_expt_suite.envs.code.MBPP_code_env',
         'class': 'MbppCodeEnv',
     },
+    "APPS": {
+        'module': 'agent_expt_suite.envs.code.APPS_code_env',
+        'class': 'AppsCodeEnv',
+    },
 }

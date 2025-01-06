@@ -1,4 +1,5 @@
 import logging
+from typing import Tuple, Dict, Any, Union
 
 logger = logging.getLogger("logger")
 
@@ -19,14 +20,14 @@ class BaseCodeEnv:
         max_chars (int): The maximum number of characters to display per test in feedback.
     """
     def __init__(
-            self,
-            timeout=10,
-            max_display_tests=None,
-            max_display_chars=None,
-            use_public_tests=False,
-            dataset_name="MBPP",
-            **kwargs
-            ):
+        self,
+        timeout=10,
+        max_display_tests=None,
+        max_display_chars=None,
+        use_public_tests=False,
+        dataset_name="MBPP",
+        **kwargs
+    ):
         """
         Initializes the CodeEnv with the given parameters.
 
@@ -63,13 +64,9 @@ class BaseCodeEnv:
     def _step(self, full_code, use_public_tests=False):
         raise NotImplementedError
 
-    def step(self, full_code, use_public_tests=False):
+    def step(self, full_code: str, use_public_tests: bool = False) -> Tuple[str, Union[bool, int, float], bool, Dict[str, Any]]:
         """
         Executes the given code against the test cases and generates feedback.
-
-        Parameters:
-            full_code (str): The complete code snippet to be executed.
-            use_public_tests (bool): Flag indicating whether to use public tests.
         """
         obs, reward, done, info = self._step(full_code, use_public_tests)
         logger.info(f'obs: {obs}\nreward: {reward}\ndone: {done}\ninfo: {info}')

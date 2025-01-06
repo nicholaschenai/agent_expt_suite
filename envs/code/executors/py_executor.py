@@ -21,6 +21,7 @@ from .executor_types import ExecuteResult, Executor
 from .humaneval_execution import swallow_io, create_tempdir
 
 from cognitive_base.utils import load_json
+from cognitive_base.utils.code_parse import whitelist_modules_path
 
 other_whitelisted_builtins = {
     "min": min,
@@ -45,7 +46,7 @@ other_whitelisted_builtins = {
     }
 
 try:
-    whitelist_modules = load_json("agent_expt_suite/envs/code/executors/whitelist_modules.json")
+    whitelist_modules = load_json(whitelist_modules_path)
     _SAFE_MODULES = frozenset(whitelist_modules)
 
 

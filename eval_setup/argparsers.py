@@ -1,5 +1,3 @@
-import argparse
-
 from cognitive_base.utils.argparsers import get_base_parser
 
 
@@ -19,6 +17,7 @@ def get_base_agent_parser():
     parser.add_argument("--do_train", action="store_true")
     parser.add_argument("--max_attempts_per_task", type=int, default=4, help="rollout length")
     parser.add_argument("--max_train_iter", type=int, default=100, help="training steps")
+    parser.add_argument("--load_train", action="store_true", help="load trainset data")
 
     # eval
     parser.add_argument("--do_test", action="store_true")
@@ -36,6 +35,7 @@ def get_base_agent_parser():
     
     # strategy
     parser.add_argument("--agent_type", type=str, default="coala")
+    parser.add_argument("--retrieval_top_k", type=int, default=5)
 
     # debug
     parser.add_argument("--debug_subset", type=int, default=50, help="subset dataset for debugging")

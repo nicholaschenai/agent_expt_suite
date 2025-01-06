@@ -1,6 +1,7 @@
 import logging
 
 from statistics import mean
+from tqdm import tqdm
 
 from cognitive_base.utils import dump_json, load_json
 from cognitive_base.utils.log import move_log_file, construct_task_folder
@@ -32,9 +33,11 @@ class EvalManager:
     def set_actor_attr(self, actor):
         if not self.args.use_public_tests:
             actor.max_task_attempts = 1
-            actor.critic_module.use_critic = False
+            if hasattr(actor, 'critic_module'):
+                actor.critic_module.use_critic = False
 
-        actor.critic_module.use_critic_success = False
+        if hasattr(actor, 'critic_module'):
+            actor.critic_module.use_critic_success = False
         actor.train = False
 
     def test_loop_serial(self):
@@ -42,7 +45,7 @@ class EvalManager:
         self.set_actor_attr(actor)
 
         n_test = len(self.dataloader)
-        for i, batch in enumerate(self.dataloader):
+        for i, batch in enumerate(tqdm(self.dataloader, leave=False)):
             # use this instead of dataloader to break because need full dataloader for eval later
             if self.args.max_test_iter and i >= self.args.max_test_iter:
                 break

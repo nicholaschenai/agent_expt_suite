@@ -10,7 +10,7 @@ class MBPPPlusDataPipeline(BaseDataPipeline):
     def postprocess(self, **kwargs):
         postprocess_mbpp_plus(**kwargs)
 
-    def get_dataset(self):
+    def _load_raw_dataset(self):
         """
         Retrieves the dataset and dataloader.
         This method initializes the MBPPPlusDataset with the provided parameters
