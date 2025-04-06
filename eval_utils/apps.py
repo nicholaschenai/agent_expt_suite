@@ -28,7 +28,7 @@ def get_error_type_stats(folder: str) -> dict:
             with open(output_file, 'r') as f:
                 data = json.load(f)
                 full_state = data.get('state')
-                # TODO: dont just take the first state
+                # TODO: dont just take the first state as it can be mixed
                 state = full_state[0]
                 
                 if state is True:

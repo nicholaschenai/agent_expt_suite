@@ -44,6 +44,8 @@ class BaseDataPipeline:
         dataset_type='pytorch',
         eval_later=False,
         use_public_tests=False,
+        do_val=False,
+        val_size=50,
         **kwargs
     ):
         self.dataset_name = dataset_name
@@ -57,6 +59,8 @@ class BaseDataPipeline:
         self.dataset_type = dataset_type
         self.eval_later = eval_later
         self.use_public_tests = use_public_tests
+        self.validation = do_val
+        self.validation_size = val_size
         self.kwargs = kwargs
         self.preprocess_fn = generic_preprocess_train if train else generic_preprocess_test
        
@@ -204,6 +208,6 @@ def prepare_dataloader(
     elif dataset_type == 'hf':
         if dataloader is None:
             dataloader = dataset
-        if debug_mode:
+        if debug_mode and debug_subset<len(dataloader):
             dataloader = dataloader.select(range(debug_subset))
     return dataset, dataloader

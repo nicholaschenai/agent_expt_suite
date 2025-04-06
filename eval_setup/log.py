@@ -20,21 +20,13 @@ class VerboseHandler(BaseCallbackHandler):
     handler for langchain callbacks
     """
     def __init__(self, verbose=False):
-        # self.color_list = [
-        #     ('HEADER', '\033[95m'),
-        #     ('OKCYAN', '\033[96m'),
-        #     ('GREEN', '\033[32m'),
-        #     ('YELLOW', '\033[33m'),
-        #     ('BLUE', '\033[34m'),
-        #     ('PURPLE', '\033[35m'),
-        #     ('RED', '\033[31m')
-        # ]
         self.color_list = color_mapping
         self.color = None
         self.ENDC = '\033[0m'
         self.verbose = verbose
         self.task_id = None
 
+    # sorta deprecated
     def print_prompts(self, prompts):
         self.set_rand_color()
         print('\n===start of prompt===\n')

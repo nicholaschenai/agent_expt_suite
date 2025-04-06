@@ -29,7 +29,7 @@ def init_code_env(**kwargs):
         train_env = env_cls(**train_kwargs)
         task_env = train_env
     
-    if kwargs.get('do_test'):
+    if kwargs.get('do_test') or kwargs.get('do_val'):
         test_kwargs = {**kwargs, 'dataset_name': test_dataset}
         env_cls = env_factory(**test_kwargs)
         test_env = env_cls(**test_kwargs)

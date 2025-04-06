@@ -1,5 +1,5 @@
 import copy
-
+from pprint import pp
 from .executors.utils_evaluate import safe_eval_answer_from_agent
 from .base_code_env import BaseCodeEnv
 
@@ -133,7 +133,6 @@ class AppsCodeEnv(BaseCodeEnv):
         example = copy.deepcopy(self.APPS_datapoint)
         example['gpt_codes'] = [full_code]
         example = safe_eval_answer_from_agent(example, return_output=True)
-
         if example.get('details', ''):
             outcomes, all_outputs = example['details'][0]
             obs = self.construct_env_feedback(outcomes, all_outputs, use_public_tests)

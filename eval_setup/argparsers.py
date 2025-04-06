@@ -19,6 +19,11 @@ def get_base_agent_parser():
     parser.add_argument("--max_train_iter", type=int, default=100, help="training steps")
     parser.add_argument("--load_train", action="store_true", help="load trainset data")
 
+    # validation
+    parser.add_argument("--do_val", action="store_true", help="enable validation during training")
+    parser.add_argument("--val_interval", type=int, default=40, help="run validation every N training steps")
+    parser.add_argument("--val_size", type=int, default=40, help="number of examples to use for validation")
+
     # eval
     parser.add_argument("--do_test", action="store_true")
     parser.add_argument("--eval_later", action="store_true", help="batch eval at the end instead of every step")
