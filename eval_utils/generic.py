@@ -1,9 +1,8 @@
+"""
+Utils for generic analysis
+"""
 import os
 import json
-import random
-import shutil
-
-import pandas as pd
 
 from collections import defaultdict
 
@@ -104,90 +103,6 @@ def process_folder_stats(base_folder: str, max_attempts: int) -> dict:
         'total_tasks': total_tasks
     }
 
-def sample_status_differences(
-    csv_path: str,
-    exp1_name: str,
-    exp2_name: str,
-    model_name: str,
-    output_base_dir: str,
-    sample_size: int = 10,
-    random_seed: int = 42
-) -> dict:
-    """
-    Saves log files for tasks that have different statuses between two experiments.
-    Done at random and sampled
-    
-    Args:
-        csv_path: Path to CSV containing status differences
-        exp1_name: Name of first experiment
-        exp2_name: Name of second experiment  
-        model_name: Name of the model
-        output_base_dir: Base directory to save outputs
-        sample_size: Maximum number of tasks to sample per category
-        random_seed: Random seed for reproducibility
-        
-    Returns:
-        Dict containing:
-        - 'wrong_to_right': List of sampled task IDs where exp1 failed but exp2 passed
-        - 'right_to_wrong': List of sampled task IDs where exp1 passed but exp2 failed
-    """
-    # Set random seed
-    random.seed(random_seed)
-    
-    # Read CSV
-    df = pd.read_csv(csv_path)
-    
-    # Get column names from CSV (they should end with _status)
-    status_cols = [col for col in df.columns if col.endswith('_status')]
-    if len(status_cols) != 2:
-        raise ValueError(f"Expected 2 status columns, found {len(status_cols)}")
-    
-    # Group tasks
-    wrong_to_right = df[
-        (df[status_cols[0]] == 'fail') & 
-        (df[status_cols[1]] == 'pass')
-    ]['task_id'].tolist()
-    
-    right_to_wrong = df[
-        (df[status_cols[0]] == 'pass') & 
-        (df[status_cols[1]] == 'fail')
-    ]['task_id'].tolist()
-    
-    # Sample tasks
-    wrong_to_right = random.sample(wrong_to_right, min(sample_size, len(wrong_to_right)))
-    right_to_wrong = random.sample(right_to_wrong, min(sample_size, len(right_to_wrong)))
-    
-    # Create output directory
-    output_dir = os.path.join(output_base_dir, f"{exp1_name}_{exp2_name}_{model_name}")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Copy log files for each task
-    for task_id in wrong_to_right + right_to_wrong:
-        # Sanitize task_id for file operations by replacing slashes with underscores
-        safe_task_id = task_id.replace('/', '_')
-        
-        # Determine status for folder name
-        if task_id in wrong_to_right:
-            status_dir = f"fail_pass_{safe_task_id}"
-        else:
-            status_dir = f"pass_fail_{safe_task_id}"
-            
-        task_dir = os.path.join(output_dir, status_dir)
-        os.makedirs(task_dir, exist_ok=True)
-        
-        # Copy log files from both experiments
-        for exp_name, status in [(exp1_name, status_cols[0]), (exp2_name, status_cols[1])]:
-            # Use original task_id for source path since that's the actual file structure
-            src_log = os.path.join("final_results", f"{exp_name}_{model_name}", 
-                                 "test_outputs", safe_task_id, "logfile.log")
-            dst_log = os.path.join(task_dir, f"{exp_name}.log")
-            
-            if os.path.exists(src_log):
-                shutil.copy2(src_log, dst_log)
-            else:
-                print(f"Warning: Log file not found for {task_id} in {exp_name}")
-
-
 def get_skill_library_usage(folder: str) -> dict:
     """
     Analyzes skill library usage across task attempts.
@@ -249,35 +164,6 @@ def process_skill_usage(base_folder: str, max_attempts: int) -> dict:
         'used_in_last_attempt_tasks': used_in_last_tasks,
         'total_tasks': total_tasks
     }
-
-def print_failed_tasks(base_folder: str):
-    """
-    Prints task IDs for tasks where the reward in output.json is False.
-    
-    Args:
-        base_folder: Path to the folder containing task_id folders
-    """
-    failed_count = 0
-    
-    # Iterate through task folders
-    for task_id in os.listdir(base_folder):
-        task_path = os.path.join(base_folder, task_id)
-        if not os.path.isdir(task_path):
-            continue
-            
-        # Check output.json
-        output_file = os.path.join(task_path, "output.json")
-        if os.path.exists(output_file):
-            try:
-                with open(output_file, 'r') as f:
-                    data = json.load(f)
-                    if not data.get('reward', False):
-                        print(f"{failed_count}. Failed task: {task_id}")
-                        failed_count += 1
-            except (json.JSONDecodeError, FileNotFoundError):
-                print(f"Error reading output for task: {task_id}")
-                
-    print(f"\nTotal failed tasks: {failed_count}")
 
 def get_train_stats_by_iter(folder: str) -> dict:
     """

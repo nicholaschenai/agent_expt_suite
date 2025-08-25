@@ -9,6 +9,11 @@ def get_overall_status(statuses):
     return 'pass' if all(status == 'pass' for status in statuses) else 'fail'
 
 
+def is_problem_failed(result_obj):
+    """Check if a problem has failed based on evaluation results."""
+    return get_overall_status([result_obj[0]['base_status'], result_obj[0]['plus_status']]) == 'fail'
+
+
 def unequal_status(d):
     """
     Function to check and print task_ids where base_status is not equal to plus_status
@@ -19,7 +24,7 @@ def unequal_status(d):
         if v[0]['base_status'] != v[0]['plus_status']:
             print(f"task_id: {k}")
             count += 1
-        if get_overall_status([v[0]['base_status'], v[0]['plus_status']]) == 'pass':
+        if not is_problem_failed(v):
             score += 1
     print(f'count: {count}')
     print(f'score: {score}')
@@ -31,7 +36,7 @@ def fail_status(d):
     """
     count = 0
     for task_id, v in d['eval'].items():
-        if get_overall_status([v[0]['base_status'], v[0]['plus_status']]) == 'fail':
+        if is_problem_failed(v):
             print(f"{count}. task_id: {task_id}")
             count += 1
     print(f'count: {count}')
@@ -71,3 +76,10 @@ def compare_dict_statuses(dict1, dict2, dict1_name="dict1", dict2_name="dict2"):
             print(f"Task IDs: {task_ids}")
     
     return status_groups
+
+def calculate_accuracy(eval_results):
+    """Calculate accuracy from evaluation results"""
+    total = len(eval_results['eval'])
+    correct = sum(1 for v in eval_results['eval'].values() 
+                 if not is_problem_failed(v))
+    return correct / total if total > 0 else 0
